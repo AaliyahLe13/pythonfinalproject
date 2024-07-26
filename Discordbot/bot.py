@@ -38,25 +38,29 @@ def subreddit(memes):
 
 class MyClient(discord.Client):
   async def on_ready(self):
-    print(f"Logged on as {self.user}")
+    print(f"Logged on as {self.user}") #It will let us know once it is logged on in the terminal
   
+  #This will detect when it first join, the bot will automatically send out the greeting that I have set up
   async def on_guild_join(self, guild):
     for channel in guild.text_channels:
       if channel.permissions_for(guild.me).send_messages:
         await channel.send(greetings)
-        break
+        break #This will confirm that it send to one channel
 
   async def on_message(self, message):
     if message.author == self.user:
       return
     
+    #This will send out wholesome memes that the bot grab from reddit
     if message.content.startswith('!wholesome'):
       await message.channel.send(subreddit("wholesomememes"))
 
+    #This will send out hug text list above randomly to virtually hug others in Discord
     elif message.content.startswith("!hug"):
       hug_text = random.choice(hug_text_art)
       await message.channel.send(hug_text)
     
+    #This will send out coding memes from subreddit
     elif message.content.startswith("!codingmeme"):
       await message.channel.send(subreddit("codingmemes"))
 
@@ -67,4 +71,4 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 client = MyClient(intents=intents)
-client.run("MTI2NTM3NzQ5NDA3MzA4NTk4Mw.GLg8Wq.rl_DGQ4eFAjANeAp__FXaA24_ESydBF10q2WA4")
+client.run("Your Token Here")
