@@ -107,10 +107,10 @@ class Dinosaur:
 
 
     def duck(self):
-        self.image = self.duck_img[self.step_index // 5]
-        self.dino_rect = self.image.get_rect()
-        self.dino_rect.x = self.x_pos
-        self.dino_rect.y = self.y_pos_duck
+        self.image = self.duck_img[self.step_index // 5]    #This is grabbing the dinosaur image running and implementing the step index #This will be rotating through the images of the dinosaur running, think of it like a gif, just two images at a fast frame rate
+        self.dino_rect = self.image.get_rect()      #We will also need the rectangular hitbox
+        self.dino_rect.x = self.x_pos               #Setting the position of the rectangule to where the dinosaur is
+        self.dino_rect.y = self.y_pos_duck          #The step index will be increment everytime the function is being called
         self.step_index += 1
         self.step_index %= 10
 
@@ -130,7 +130,6 @@ class Obstacles:    #This is the parent class that all obstacles will be going t
         if self.rect.x < -self.rect.width:      #This if statement will remove any off obstacles that goes off the screen on the left hand side
             obstacles.pop()
 
-
     def draw(self, screen):
         screen.blit(self.image[self.type], self.rect)
 
@@ -144,7 +143,7 @@ class LargeCactus(Obstacles):
     def __init__(self, image):
         self.type = random.randint(0, 2)
         super().__init__(image, self.type)
-        self.rect.y = 300
+        self.rect.y = 300   #This is lower coordinates, because the image will be shown higher. *Look at the notes*
 
 
 class Bird(Obstacles):      #Somewhat similar to the cacti classes but in the Bird class there are two images
@@ -162,22 +161,60 @@ class Bird(Obstacles):      #Somewhat similar to the cacti classes but in the Bi
         screen.blit(self.image[self.index // 5], self.rect)     #Showing the image on the screen
         self.index += 1
 
-
 class Cloud:    #This class will be containing 3 functions or methods
     def __init__(self):
-        self.x = screen_width + random.randint(800, 1000)   #These two will be telling us about the cloud coordinates when it is created
+        self.x = screen_width + random.randint(800, 3000)   #These two will be telling us about the cloud coordinates when it is created
         self.y = random.randint(50, 100)
+        
         self.image = cloud
         self.width = self.image.get_width()     #The width of the cloud
+        
 
     def update(self):   #This functions/methods will be making the cloud move from the right to the left
         self.x -= game_speed    #This will be subtracting the x coordinates of the cloud
         if self.x < -self.width:       #This if statement will be resetting the cloud coordinates whenever it goes off the screen for it to show up again
             self.x = screen_width + random.randint(2500, 3000)
             self.y = random.randint(50, 100)
-    
+            
+
     def draw(self, screen):
         screen.blit(self.image, (self.x, self.y))
+    
+
+def menu(death_count):
+    global points
+    run = True
+    while run: 
+        screen.fill((255, 255, 255)) #White background
+        font = pygame.font.Font("freesansbold.ttf", 30)
+
+        if death_count == 0: #Must be zero since the player just started the game
+            text = font.render("Press any key to Start!", True, (0, 0, 0))
+        elif death_count > 0:  #This conditional will go through if the player already play a couple of rounds
+            #We want to display the text if player want to play again and the score
+            text = font.render("Press any key to Start!", True, (0, 0, 0))
+            score = font.render(f"Your Score: {points}", True, (0, 0, 0))
+            #Now we want to position the words of where we want to show on the screen
+            scorerect = score.get_rect()
+            scorerect.center = (screen_width // 2, screen_height // 2 + 50)
+            screen.blit(score, scorerect) #Drawing it onto the screen
+            
+        textrect = text.get_rect()
+        textrect.center = (screen_width // 2, screen_height // 2)
+        screen.blit(text, textrect)
+        #Now we need to include the image of the Dinosaur running to make it look nicer
+        screen.blit(running[0], (screen_width // 2 - 20, screen_height // 2 - 140))
+        pygame.display.update()
+
+        #An option for the player to quit out of the game safely
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                exit() 
+                
+            if event.type == pygame.KEYDOWN:
+                main()
+
 
 #The main loop will be in here
 def main(): #It will become super helpful later down in the coding
@@ -185,13 +222,14 @@ def main(): #It will become super helpful later down in the coding
     run = True #This will be the switch for our while loop (starts the loop)
     clock = pygame.time.Clock()         #This is a clock that is used to control the game's frame rate
     player = Dinosaur()         #This is adding the player into the game and this is the instances of the class Dinosaur
-    cloud = Cloud()     #This will be calling up the Cloud class
     game_speed = 14
     x_pos_bg = 0        #Determines the background position (of the land that the dinosaur will be running on)
     y_pos_bg = 380
     points = 0 #At the start of the game, the points will always start at 0
     font = pygame.font.Font("freesansbold.ttf", 20)
     obstacles = []
+    clouds = [Cloud() for i in range(3)]
+    death_count = 0
     
     def score():
         global points, game_speed
@@ -240,11 +278,19 @@ def main(): #It will become super helpful later down in the coding
             obstacle.draw(screen)
             obstacle.update() 
             if player.dino_rect.colliderect(obstacle.rect):        #This if statement will be detecting whenever the dinosaur run pass a obstacles the hitbox will become red
-                pygame.draw.rect(screen, (255, 0, 0), player.dino_rect, 2)      
-        background()
+                pygame.time.delay(2000)     #This will show a delay time of how you die
+                death_count += 1
+                menu(death_count)     #This will be a function
 
-        cloud.draw(screen)      #These two will be calling the update and drawing on the cloud
-        cloud.update() 
+
+        background()
+        
+        for cloud in clouds:        #This loop is responding to how many cloud we want from the "clouds" variable.
+            cloud.update()
+            if cloud.x < -cloud.width:
+                cloud.x = screen_width + random.randint(800, 1000)
+                cloud.y = random.randint(50, 100)
+            cloud.draw(screen)
 
         score()     
 
@@ -252,4 +298,7 @@ def main(): #It will become super helpful later down in the coding
         pygame.display.update()     #This will updates the display with everything drawn since the last update (in other words, putting all images in the game)
 
 
-main()
+
+
+
+menu(death_count=0)
